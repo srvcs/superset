@@ -1,0 +1,132 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "srvcs-superset",
+    "description": "",
+    "license": {
+      "name": "Apache-2.0",
+      "identifier": "Apache-2.0"
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "tags": [],
+        "summary": "`GET /` — service identity (srvcs service standard).",
+        "operationId": "index",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Info"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [],
+        "summary": "`POST /` — decide whether `a` is a superset of `b`.",
+        "description": "This service is a pure orchestrator: `a ⊇ b` is exactly `b ⊆ a`, so it\ndelegates to `srvcs-subset` with the arguments swapped and returns that\nservice's boolean `result`. It performs no set logic of its own and does not\ncall `srvcs-isnumber` directly — element validation propagates up from\n`srvcs-subset`, whose `422` is forwarded unchanged.",
+        "operationId": "evaluate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "an element is not a valid integer (forwarded from srvcs-subset)"
+          },
+          "500": {
+            "description": "a dependency returned a malformed result"
+          },
+          "503": {
+            "description": "the srvcs-subset dependency is unavailable"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "EvalRequest": {
+        "type": "object",
+        "required": [
+          "a",
+          "b"
+        ],
+        "properties": {
+          "a": {
+            "type": "object",
+            "description": "The candidate superset, as a list of integers. Every element must be a\nJSON integer (i64)."
+          },
+          "b": {
+            "type": "object",
+            "description": "The candidate subset, as a list of integers. Every element must be a\nJSON integer (i64)."
+          }
+        }
+      },
+      "Info": {
+        "type": "object",
+        "required": [
+          "service",
+          "concern",
+          "depends_on"
+        ],
+        "properties": {
+          "concern": {
+            "type": "string"
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "service": {
+            "type": "string"
+          }
+        }
+      },
+      "ResultResponse": {
+        "type": "object",
+        "required": [
+          "a",
+          "b",
+          "result"
+        ],
+        "properties": {
+          "a": {
+            "type": "object"
+          },
+          "b": {
+            "type": "object"
+          },
+          "result": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}
